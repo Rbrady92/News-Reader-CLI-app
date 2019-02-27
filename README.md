@@ -34,6 +34,10 @@ Finally, run 'news-reader' to start the app.
 
 Follow the on screen instructions to navigate through the app once it's been started.
 
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/Rbrady92/News-Reader-CLI-app
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
