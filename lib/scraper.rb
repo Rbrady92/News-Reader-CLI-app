@@ -2,7 +2,7 @@ require 'nokogiri'
 require 'open-uri'
 
 class Scraper
-    attr_accessor :titles, :urls, :text, :sites, :art_choice, :cat_choice         #sites defined in CLI, has access to list of each req. category by site 'name'
+    attr_accessor :titles, :urls, :text, :sites, :art_choice, :cat_choice        
 
     def initialize
         @titles = []
