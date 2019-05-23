@@ -1,71 +1,49 @@
-require 'nokogiri'
-require 'open-uri'
+class Scraper 
 
-class Scraper
-    attr_accessor :titles, :urls, :text, :sites, :art_choice, :cat_choice        
-
-    def initialize
-        @titles = []
-        @urls = []
-        @text = []
+    @@cat_choice = ''
+    @@art_num = ''
+    
+    def self.cat_choice(cat) 
+        @@cat_choice = cat
     end 
 
-    def title_scrape
-        if @cat_choice == 'business' || @cat_choice == 'security' || @cat_choice == 'transportation'
-            Nokogiri::HTML(open(@sites.wired)).css('a h2').each {|title| @titles << title.text}  
+    def self.set_art_num(num)
+        @@art_num = num
+    end 
 
-        else 
-            Nokogiri::HTML(open(@sites.wired)).css('[to*=story] h2').each {|title| @titles << title.text}  
+    def self.art_num 
+        @@art_num 
+    end 
 
-            @sites.mashable.each {|site| Nokogiri::HTML(open(site)).css('#column-new .column-content .flat h1').each {|title| @titles << title.css('a').text unless title.css('a').attr('href').text.include?('video')}}
-        
-            @sites.verge.each {|site| Nokogiri::HTML(open(site)).css('.c-entry-box--compact--article [data-analytics-link=article]').each {|title| @titles << title.text unless title.text == "View All Stories"}} 
+    def self.title_and_url_scrape
+        wired_url = "https://www.wired.com/category/#{@@cat_choice}/"
+
+        Nokogiri::HTML(open(wired_url)).css('[to*=story] h2').each {|title| Articles.titles << title.text}
+
+        Nokogiri::HTML(open(wired_url)).css('[class*=card-component__description] [to*=story]').each {|url| Articles.urls << 'https://www.wired.com' + url.attr('href')}
+    
+        Articles.format_urls
+    end 
+
+    def self.text_scrape
+        article = Nokogiri::HTML(open(Articles.urls[@@art_num]))          
+
+        article.css('.article-body-component p').each do |curr|
+            Articles.text << curr.text
+            Articles.text << ""
         end 
-
-        #@titles.delete_if {|title| title == "View All Stories"}
     end 
 
-    def url_scrape
-        if @cat_choice == 'business' || @cat_choice == 'security' || @cat_choice == 'transportation'
-            Nokogiri::HTML(open(@sites.wired)).css('[class*=card-component__description] [to*=story]').each {|url| @urls << 'https://www.wired.com' + url.attr('href')}
+    def self.author_and_date 
+        article = Nokogiri::HTML(open(Articles.urls[@@art_num]))
+
+        author = article.css('.meta-list .visually-hidden').text       
+        Articles.set_author(author)
+        Articles.format_author
         
-        else
-            Nokogiri::HTML(open(@sites.wired)).css('[class*=card-component__description] [to*=story]').each {|url| @urls << 'https://www.wired.com' + url.attr('href')}
-
-            @sites.mashable.each {|site| Nokogiri::HTML(open(site)).css('#column-new .column-content .flat h1').each {|url| @urls << "#{url.css('a').attr('href')}?utm_cid=hp-n-1" unless url.css('a').attr('href').text.include?('video')}} 
-
-            @sites.verge.each {|site| Nokogiri::HTML(open(site)).css('.c-entry-box--compact--article [data-analytics-link=article]').each {|url| @urls << url.attr('href')}}
-        end 
-
-        @urls.uniq!         #uniq is needed because wired produces dupes
-    end 
-
-    def text_scrape
-        article = Nokogiri::HTML(open(@urls[@art_choice]))
-
-        if @urls[@art_choice].include?('wired.com')
-            article.css('.article-body-component p').each do |curr|
-                @text << curr.text
-                @text << ""
-            end 
-
-        elsif @urls[@art_choice].include?('mashable.com')
-            article.css('.article-content p').each do |curr|           #still need to figure out how to exclude image text/captions
-                @text << curr.text unless curr.text.include?('SEE ALSO') 
-                @text << ""
-            end 
-            @text.each do |curr| 
-                curr.gsub!(/Â/, '')
-                curr.gsub!(/"'"/, "'")
-                #curr = curr.replaceAll("\\p{Pd}", "-")     #should replace any form of dash but isnt working
-            end 
-
-        elsif @urls[@art_choice].include?('theverge')
-            article.css('.c-entry-content p').each do |curr| 
-                @text << curr.text
-                @text << ""
-            end 
-        end    
+        date = article.css('time').text.slice(0, 16)
+        Articles.set_date(date)
+        Articles.format_date        
     end 
 
 end 

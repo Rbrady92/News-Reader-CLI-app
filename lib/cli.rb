@@ -1,141 +1,150 @@
-require 'site_list'
-require 'scraper'
-require 'categories'
-require 'messages'
+class CLI 
+    #attr_accessor :scraper, :articles
 
-class CLI
-    attr_accessor :cat_choice, :art_choice, :site_list, :categories, :scraper, :messages
+    @@categories = ['business', 'culture', 'gear', 'ideas', 'science', 'security', 'transportation']         
 
-    def initialize
-        @categories = CategoryList.new 
-        @messages = Messages.new
-        @site_list = SiteList.new
-        @scraper = Scraper.new
+    # def initialize
+    #     @scraper = Scraper.new 
+    #     @articles = Articles.new 
+    # end 
+
+    def self.categories 
+        @@categories 
     end 
 
-    def start  
-        @messages.space
-        @messages.welcome
 
-        menu
-        cat_choice         
-        pass_cat
-        scrape_titles        
+    def self.start 
+        2.times {puts ""}
+        puts "Welcome! This gem aggregates articles from the popular tech news site 'Wired'."
+        puts ""
+        puts "Select the genre you'd like to browse by entering the corresponding number."
+        puts ""
+        puts "To exit the program at any time, enter 'exit' without the quotes."
+        2.times {puts ""}
+
+        list_cats        
+        choose_cat 
+        Scraper.title_and_url_scrape
         list_titles
-        art_choice
+        art_choice 
+        Scraper.text_scrape
+        Scraper.author_and_date
         display_text
-        close
+        end_of_art
     end 
 
-    def menu
-        @messages.space
-        @messages.cat_select
-        @messages.exit_prompt
-        @messages.space
-        @categories.list         
-        @messages.space
+
+    def self.list_cats
+        count = 1
+
+        @@categories.each do |cat|                          
+            puts "#{count}) #{cat.capitalize}"    
+            count += 1
+        end 
     end 
 
-    def cat_choice                                
-        @cat_choice = gets.strip
+    
+    def self.choose_cat 
+        puts ""
 
-        if @cat_choice == 'exit'
+        cat_num = gets.strip 
+
+        if cat_num == 'exit'
             exit 
         end 
 
-        @cat_choice = @cat_choice.to_i                                                              
+        cat_num = cat_num.to_i
 
-        if @cat_choice > 0 && @cat_choice < 7 
-            @cat_choice -= 1
-            cat_num = @cat_choice
-            @cat_choice = @categories.categories[cat_num]    
-            @categories.cat_choice = @cat_choice     
-            @messages.elem(@categories.cat_choice)
-            @site_list.cat_control
-        else 
-            @messages.invalid_input
-            start
+        if cat_num > 0 && cat_num < 8 
+            cat_num -= 1 
+            cat_choice = @@categories[cat_num]
+            Scraper.cat_choice(cat_choice)        
+
+            #Scraper.articles = @articles                       
         end 
     end 
 
 
-    def pass_cat
-        @site_list.category = @cat_choice  
-        @site_list.create_urls    
-        @site_list.cat_control                                     
+    def self.list_titles
+        3.times {puts ""}
+        puts "If you see an article you'd like to read, enter the corresponding number to view it."
+        3.times {puts ""}
+
+        count = 1
+
+        Articles.titles.each do |title|
+            puts "#{count}) #{title}"
+            puts ""
+            count += 1
+        end 
+
+        puts "#{Articles.urls}"
     end 
 
-    def scrape_titles
-        @scraper.sites = @site_list    
-        @scraper.cat_choice = @cat_choice                
-    end                              
 
-    def list_titles             
-        @scraper.title_scrape       
+    def self.art_choice 
+        art_num = gets.strip 
 
-        2.times {@messages.space}
-        @messages.art_select
-        @messages.space
-        @messages.return_to_menu
-        2.times {@messages.space}
-
-        @messages.list(@scraper.titles)    
-    end 
-
-    def art_choice
-        @art_choice = gets.strip
-
-        if @art_choice == 'menu'
-            @scraper.titles.clear
-            @scraper.urls.clear
+        if art_num == 'menu'
+            Articles.titles.clear 
+            Articles.urls.clear
             start
+        elsif art_num == 'exit'
+            exit 
+        end 
+
+        art_num = art_num.to_i 
+
+        if art_num > 0 && art_num <= Articles.titles.length
+            art_num -= 1
+            Scraper.set_art_num(art_num)
         else 
-            @art_choice = @art_choice.to_i                                                    
-
-            if @art_choice > 0 && @art_choice <= @scraper.titles.length 
-                @art_choice -= 1    
-                @scraper.url_scrape                              
-                @scraper.art_choice = @art_choice                                          
-            else 
-                @messages.invalid_input
-                art_choice
-            end 
-        end
+            puts "The input you entered appears to be invalid, please enter a number corresponding to an article."
+        end 
     end 
 
-    def display_text                             
-        2.times {@messages.space}
-        @messages.elem(@scraper.titles[@art_choice])     
-        @messages.space
-        @messages.url_message(@scraper.urls[@art_choice])
-        3.times {@messages.space} 
 
-        @scraper.text_scrape
+    def self.display_text
+        3.times {puts ""}
+        puts "#{Articles.titles[Scraper.art_num]}"
+        puts ""
+        puts "Author:#{Articles.author[1]}"
+        puts "Date Posted: #{Articles.date_posted} EST"
+        puts ""
+        puts "Link: #{Articles.urls[Scraper.art_num]}"
+        3.times {puts ""}
 
-        @messages.readable(@scraper.text)
+        Articles.text.each {|paragraph| puts "#{paragraph}"} 
     end 
 
-    def close
-        3.times {@messages.space} 
-        @messages.return_to_menu
-        @messages.exit_prompt
-        @messages.space
 
-        art_end = gets.strip
+    def self.end_of_art 
+        3.times {puts ""}
+        puts "If you'd like to return to the main menu, enter 'menu'. To exit the program, enter 'exit'."
+        puts ""
 
-        if art_end == 'menu' 
-            @scraper.titles.clear
-            @scraper.urls.clear
-            @scraper.text.clear
+        art_end = gets.strip 
+
+        if art_end == 'menu'
+            Articles.titles.clear 
+            Articles.urls.clear
+            Articles.text.clear
             start
         elsif art_end == 'exit'
-            @messages.space
-            @messages.exit_message    
-            exit                 
+            2.times {puts""}
+            puts "Thanks for using News-Reader!"
+            exit 
         else 
-            @messages.invalid_input
-            close
+            puts "The input you entered appears to be invalid."
+            puts "If you'd like to return to the main menu, enter 'menu'. To exit the program, enter 'exit.'"
         end 
     end 
 
 end 
+
+
+
+#could do most, if not all of the article stuff in realtime/in scraper as a return value instead of storing it and then querying
+#the storage class
+
+#check notes at bottom of cli class in original news-reader folder
