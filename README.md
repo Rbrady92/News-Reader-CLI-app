@@ -1,8 +1,6 @@
 # News::Reader
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/news/reader`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Welcome to News Reader! This gem aggregates articles from the news source 'Wired', allowing you to read them in terminal and get info such as url links, authors, and the date posted.
 
 ## Installation
 
@@ -26,9 +24,7 @@ To test this gem locally, you can either clone or download it from this repo.
 
 After that, open your terminal/command line and cd into the directory you are storing the news-reader folder in (ex: ...username/downloads/news-reader). 
 
-Once there, run 'rake install'. 
-
-Finally, run 'news-reader' to start the app.
+Once there, run 'ruby bin/news-reader' to start the app.
 
 ## Usage
 
